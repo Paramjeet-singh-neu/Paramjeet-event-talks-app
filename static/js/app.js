@@ -17,7 +17,7 @@ const errorContainer = document.getElementById('error-container');
 const searchInput = document.getElementById('search-input');
 const syncTimeEl = document.getElementById('sync-time');
 const refreshBtn = document.getElementById('refresh-btn');
-const themeToggleBtn = document.getElementById('theme-toggle-btn');
+const themeCheckbox = document.getElementById('theme-checkbox');
 const bulkBar = document.getElementById('bulk-tweet-bar');
 const selectedCountEl = document.getElementById('selected-count');
 const deselectAllBtn = document.getElementById('deselect-all-btn');
@@ -72,26 +72,27 @@ document.addEventListener('DOMContentLoaded', () => {
 // Theme setup
 function setupTheme() {
   document.documentElement.setAttribute('data-theme', currentTheme);
-  updateThemeIcon();
+  updateThemeSwitch();
 }
 
-function updateThemeIcon() {
-  const icon = themeToggleBtn.querySelector('i');
-  if (currentTheme === 'light') {
-    icon.setAttribute('data-lucide', 'moon');
-    themeToggleBtn.title = "Switch to Dark Mode";
-  } else {
-    icon.setAttribute('data-lucide', 'sun');
-    themeToggleBtn.title = "Switch to Light Mode";
+function updateThemeSwitch() {
+  const checkbox = document.getElementById('theme-checkbox');
+  const wrapper = document.querySelector('.theme-switch-wrapper');
+  
+  if (checkbox) {
+    checkbox.checked = (currentTheme === 'light');
   }
-  lucide.createIcons();
+  
+  if (wrapper) {
+    wrapper.setAttribute('data-theme-active', currentTheme);
+  }
 }
 
-function toggleTheme() {
-  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+function toggleTheme(e) {
+  currentTheme = e.target.checked ? 'light' : 'dark';
   localStorage.setItem('theme', currentTheme);
   document.documentElement.setAttribute('data-theme', currentTheme);
-  updateThemeIcon();
+  updateThemeSwitch();
 }
 
 // Fetch Release Notes
@@ -305,7 +306,9 @@ function getSelectedItems() {
 // Event Listeners Setup
 function setupEventListeners() {
   // Theme Toggle
-  themeToggleBtn.addEventListener('click', toggleTheme);
+  if (themeCheckbox) {
+    themeCheckbox.addEventListener('change', toggleTheme);
+  }
   
   // Refresh Button
   refreshBtn.addEventListener('click', () => fetchReleases(true));

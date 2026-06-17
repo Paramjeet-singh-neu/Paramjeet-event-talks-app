@@ -32,9 +32,14 @@
       </div>
       
       <div class="header-actions">
-        <button id="theme-toggle-btn" class="theme-toggle-btn" title="Toggle Theme">
-          <i data-lucide="sun" style="width: 1.2rem; height: 1.2rem;"></i>
-        </button>
+        <div class="theme-switch-wrapper" data-theme-active="dark">
+          <i data-lucide="sun" class="switch-icon sun-icon" title="Light Theme"></i>
+          <label class="theme-switch" for="theme-checkbox" title="Toggle Theme">
+            <input type="checkbox" id="theme-checkbox">
+            <span class="slider round"></span>
+          </label>
+          <i data-lucide="moon" class="switch-icon moon-icon" title="Dark Theme"></i>
+        </div>
       </div>
     </header>
 
