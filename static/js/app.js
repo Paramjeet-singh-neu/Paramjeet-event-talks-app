@@ -243,9 +243,14 @@ function renderReleases() {
           <i data-lucide="external-link" style="width: 0.9rem; height: 0.9rem;"></i>
           Official Docs
         </a>
-        <button class="btn btn-secondary btn-icon" title="Tweet this update" onclick="event.stopPropagation(); openComposerForSingle('${item.id}')">
-          <i data-lucide="twitter" style="width: 1.05rem; height: 1.05rem; color: #1da1f2;"></i>
-        </button>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-secondary btn-icon" title="Copy text to clipboard" onclick="event.stopPropagation(); copyCardText(this, '${item.id}')">
+            <i data-lucide="copy" style="width: 1.05rem; height: 1.05rem;"></i>
+          </button>
+          <button class="btn btn-secondary btn-icon" title="Tweet this update" onclick="event.stopPropagation(); openComposerForSingle('${item.id}')">
+            <i data-lucide="twitter" style="width: 1.05rem; height: 1.05rem; color: #1da1f2;"></i>
+          </button>
+        </div>
       </div>
     `;
     
@@ -383,6 +388,12 @@ function setupEventListeners() {
     window.open(twitterUrl, '_blank', 'noopener,noreferrer');
     closeComposer();
   });
+
+  // Export CSV Button
+  const exportCsvBtn = document.getElementById('export-csv-btn');
+  if (exportCsvBtn) {
+    exportCsvBtn.addEventListener('click', exportToCSV);
+  }
 }
 
 // Single Tweet Composer Trigger
@@ -493,4 +504,80 @@ function updateCharCounters() {
     sendTweetBtn.style.opacity = '1';
     sendTweetBtn.style.cursor = 'pointer';
   }
+}
+
+// Copy single release note text to clipboard
+window.copyCardText = function(btn, id) {
+  const item = allReleases.find(r => r.id === id);
+  if (!item) return;
+  
+  navigator.clipboard.writeText(item.text).then(() => {
+    const icon = btn.querySelector('i');
+    if (icon) {
+      icon.setAttribute('data-lucide', 'check');
+      icon.style.color = 'var(--feature)';
+      lucide.createIcons();
+      
+      setTimeout(() => {
+        icon.setAttribute('data-lucide', 'copy');
+        icon.style.color = '';
+        lucide.createIcons();
+      }, 2000);
+    }
+  }).catch(err => {
+    console.error('Failed to copy text: ', err);
+  });
+};
+
+// Export currently filtered and searched release notes to CSV
+function exportToCSV() {
+  const query = searchQuery.toLowerCase().trim();
+  const filtered = allReleases.filter(item => {
+    const type = item.type.toLowerCase();
+    let matchesFilter = activeFilter === 'all' || 
+                        (activeFilter === 'issue' && (type === 'issue' || type === 'fix')) ||
+                        type === activeFilter;
+                        
+    let matchesSearch = true;
+    if (query) {
+      matchesSearch = item.date.toLowerCase().includes(query) || 
+                      item.type.toLowerCase().includes(query) || 
+                      item.text.toLowerCase().includes(query);
+    }
+    return matchesFilter && matchesSearch;
+  });
+
+  if (filtered.length === 0) {
+    alert("No release notes match the current search/filter criteria to export.");
+    return;
+  }
+
+  function escapeCSV(val) {
+    if (val === undefined || val === null) return '""';
+    let str = val.toString().replace(/"/g, '""');
+    return `"${str}"`;
+  }
+
+  const csvRows = [];
+  csvRows.push(['Date', 'Type', 'Content', 'Link'].map(escapeCSV).join(','));
+
+  filtered.forEach(item => {
+    csvRows.push([
+      item.date,
+      item.type,
+      item.text,
+      item.link
+    ].map(escapeCSV).join(','));
+  });
+
+  const csvContent = csvRows.join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `bigquery_releases_${activeFilter}_${new Date().toISOString().split('T')[0]}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
